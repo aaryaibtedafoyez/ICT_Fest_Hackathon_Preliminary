@@ -8,7 +8,7 @@ pull reports.
 ## Stack
 
 - Python 3.11, FastAPI, SQLAlchemy, SQLite (single file, no external DB service)
-- JWT auth (access + refresh tokens), HS256, secret from the `JWT_SECRET` env var
+- JWT auth (access + refresh tokens), HS256, secret from the `JWT_SECRET` env variable.
 - One container, served on **port 8000**
 
 ## Setup
