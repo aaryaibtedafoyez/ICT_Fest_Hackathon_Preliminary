@@ -2,6 +2,7 @@
 from datetime import datetime, time, timedelta
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import cache
@@ -10,7 +11,6 @@ from ..database import get_db
 from ..errors import AppError
 from ..models import Booking, Room, User
 from ..schemas import RoomCreateRequest
-from ..services import stats
 from ..timeutils import iso_utc
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
@@ -107,9 +107,16 @@ def room_stats(
     user: User = Depends(get_current_user),
 ):
     room = _get_org_room(db, room_id, user.org_id)
-    current = stats.get(room.id)
+    confirmed = db.query(Booking).filter(
+        Booking.room_id == room.id,
+        Booking.status == "confirmed",
+    )
+    total_confirmed = confirmed.count()
+    total_revenue = confirmed.with_entities(
+        func.coalesce(func.sum(Booking.price_cents), 0)
+    ).scalar()
     return {
         "room_id": room.id,
-        "total_confirmed_bookings": current["count"],
-        "total_revenue_cents": current["revenue"],
+        "total_confirmed_bookings": total_confirmed,
+        "total_revenue_cents": total_revenue,
     }
